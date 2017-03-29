@@ -31,6 +31,7 @@ String studStr = template("#{id}\tName: #{st.getName}, Age: #{st.getAge}, Gender
                     .arg("st", student)
                     .format();
 System.out.println(studStr);
+// Output: "10	Name: Andrei, Age: 30, Gender: Male"
 ```
 
 
