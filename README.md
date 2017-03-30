@@ -1,30 +1,44 @@
 # aleph-formatter
 
-This is a simple String Formatter for Java that supports named parameters:
+`AlephFormatter` is a lightweight String Formatter for Java that supports named parameters with a twist: it has a very limited support for object introspection. 
 
 ```java
-String result = template("#{x} + #{y} = #{z}")
-                    .args("x", 5, "y", 10, "z", 15)
-                    .format();
+String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
+                .arg("errNo", 101)
+                .arg("c", String.class)
+                .fmt();
+
+
 System.out.println(result);
-
-// Output: "5 + 10 = 15"
+```
+Output:
+```
+Error number: 101 -> String -> java.lang
 ```
 
-It also supports the possibility to chain methods (getters) for the supplied arguments:
+The API is very simple, and has a [fluid](https://en.wikipedia.org/wiki/Fluent_interface) feel to it. 
+
+There a few ways you can achieve the same thing as above. 
+
+For example instead of using `arg()` you can use `args()` and specify the list of parameters on a single line, alternating the argument to be replaced with it's value:
 
 ```java
-Student student = new Student("Andrei", 30, "Male");
-String studStr = template("#{id}\tName: #{st.getName}, Age: #{st.getAge}, Gender: #{st.getGender}")
-                    .arg("id", 10)
-                    .arg("st", student)
-                    .format();
-System.out.println(studStr);
-// Output: "10	Name: Andrei, Age: 30, Gender: Male"
+String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
+                .args("errNo", 101, "c", String.class)
+                .fmt();
 ```
 
+Escaping the `"#{"` can be done using the ``` ` ``` character:
 
-# To do:
+```java
+String result = template("#{errNo} + escaped: `#{errNo}")
+                 .arg("errNo", 101)
+                 .fmt();
 
-- Add library to a maven public repo;
-- Write more unit tests
+System.out.println(result);
+```
+
+Output: 
+```
+101 + escaped: #{errNo}
+```
