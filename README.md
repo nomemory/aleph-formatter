@@ -40,6 +40,8 @@ String result = template("#{errNo} + escaped: `#{errNo}")
 System.out.println(result);
 ```
 
+If one of the arguments is missing, or the mehod chain on the object cannot be executed, it replaces the value with `"null"` instead of throwing a `NullPointerException`.
+
 Output: 
 ```
 101 + escaped: #{errNo}
