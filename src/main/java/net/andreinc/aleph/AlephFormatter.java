@@ -5,7 +5,12 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isLetter;
+import static java.lang.reflect.Array.get;
+import static java.lang.reflect.Array.getLength;
 import static net.andreinc.aleph.AlephFormatter.State.*;
+import static net.andreinc.aleph.UncheckedFormatterException.*;
 
 public class AlephFormatter {
 
@@ -34,10 +39,14 @@ public class AlephFormatter {
         PARAM_START,
 
         // Corresponds to the state when we are visiting the character '}'
-        PARAM_END
+        PARAM_END,
+
+        // Escape char
+        ESCAPE_CHAR
     }
 
     private final String str;
+
     private final Map<String, Object> args = new HashMap<>();
 
     private AlephFormatter(String str) {
@@ -48,6 +57,14 @@ public class AlephFormatter {
         return new AlephFormatter(str);
     }
 
+    public static AlephFormatter template(String str, Object... args) {
+        return template(str).args(args);
+    }
+
+    public static AlephFormatter template(String str, Map<String, Object> args) {
+        return template(str).args(args);
+    }
+
     public AlephFormatter arg(String argName, Object object) {
         this.args.put(argName, object);
         return this;
@@ -55,18 +72,25 @@ public class AlephFormatter {
 
     public AlephFormatter args(Map<String, Object> args) {
         for(Map.Entry<String, Object> entry : args.entrySet()) {
+            if (this.args.containsKey(entry.getKey()))
+                throw argumentAlreadyExist(entry.getKey());
             this.args.put(entry.getKey(), entry.getValue());
         }
         return this;
     }
 
     public AlephFormatter args(Object... args) {
-        if (args.length % 2 == 1) {
-            throw new IllegalArgumentException("Invalid number of parameters. Every key needs to mach a value.");
-        }
+
+        if (args.length % 2 == 1)
+            throw invalidNumberOfArguments(args.length);
 
         for (int i = 0; i < args.length; i+=2) {
             String key = (String) args[i];
+
+            // If the argument exists throw an error
+            if (this.args.containsKey(key))
+                throw argumentAlreadyExist(key);
+
             Object value = args[i+1];
             this.args.put(key, value);
         }
@@ -76,7 +100,7 @@ public class AlephFormatter {
 
     /**
      */
-    public String format() {
+    public String fmt() {
 
         StringBuilder result =  new StringBuilder(str.length());
         StringBuilder param = new StringBuilder(16);
@@ -96,10 +120,13 @@ public class AlephFormatter {
                 case PARAM_START: i++; break;
 
                 // We append the character to the param chain buffer
-                case PARAM: param.append(chr); break;
+                case PARAM: { validateParamChar(chr, i); param.append(chr); break; }
 
                 // We append and replace the param with the correct value
                 case PARAM_END: appendParamValue(param, result); break;
+
+                // Escape character
+                case ESCAPE_CHAR: break;
             }
             i++;
         }
@@ -108,13 +135,14 @@ public class AlephFormatter {
     }
 
     // The method that is used to change the states depending on the index
-    // in the string.
+    // in the string and the current value of the character
     private State nextState(State currentState, int i) {
         switch (currentState) {
-            case FREE_TEXT      : return evaluateFreeText(str, i);
-            case PARAM_START    : return evaluateParamStart(str, i);
-            case PARAM          : return evaluateParam(str, i);
-            case PARAM_END      : return evaluateParamEnd(str, i);
+            case FREE_TEXT      : return jumpFromFreText(str, i);
+            case PARAM_START    : return jumpFromParamStart(str, i);
+            case PARAM          : return jumpFromParam(str, i);
+            case PARAM_END      : return jumpFromParamEnd(str, i);
+            case ESCAPE_CHAR    : return FREE_TEXT;
             default             : throw new IllegalArgumentException("Invalid state exception when parsing string.");
         }
     }
@@ -141,7 +169,29 @@ public class AlephFormatter {
         result.append(
                 (param.length() != 0) ?
                         valueInChain(objectValue, param) :
-                        objectValue);
+                        evaluateIfArray(objectValue));
+    }
+
+    private static Object evaluateIfArray(Object o) {
+        if (null != o && o.getClass().isArray())
+            return arrayToString(o);
+        return o;
+    }
+
+    private static String arrayToString(Object array) {
+        StringBuilder buff = new StringBuilder("[");
+
+        for(int i = 0; i < getLength(array); ++i)
+            buff.append(get(array, i)).append(", ");
+
+        return clearLastComma(buff).append("]").toString();
+    }
+
+    private static StringBuilder clearLastComma(StringBuilder buff) {
+        int lastComma = buff.lastIndexOf(", ");
+        if (-1 != lastComma)
+            buff.delete(lastComma, buff.length());
+        return buff;
     }
 
     // This method takes the section until the end of the buff or
@@ -169,51 +219,79 @@ public class AlephFormatter {
         // When last obtained is null or when there are no more methods in the chain
         // we stop
         if (object == null || paramBuffer.length() == 0) {
-            return object;
+            return evaluateIfArray(object);
         }
 
         String methodName = takeUntilDotOrEnd(paramBuffer);
 
+        Object newObject;
         try {
-            Method method = object.getClass().getMethod(methodName);
-            Object newObject = method.invoke(object);
+            // Try with the given method or with the getter as a fallback
+            Method method = getMethodOrGetter(object, methodName);
+            if (null == method)
+                return null;
+            newObject = method.invoke(object);
             return valueInChain(newObject, paramBuffer);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            // Couldn't invoke the method
             return null;
         }
     }
 
+    public static Method getMethodOrGetter(Object object, String methodName) {
+        Method method;
+        try {
+            method = object.getClass().getMethod(methodName);
+        }  catch (NoSuchMethodException e) {
+            try {
+                // Maybe improve this
+                String capital = methodName.substring(0, 1).toUpperCase();
+                String nameCapitalized = "get" + capital + methodName.substring(1);
+                method = object.getClass().getMethod(nameCapitalized);
+            } catch (NoSuchMethodException e1) {
+                return null;
+            }
+        }
+        return method;
+    }
 
-    private static State evaluateFreeText(String fmt, int idx) {
-        if (isParamStart(fmt, idx))
-            return PARAM_START;
+    private static State jumpFromFreText(String fmt, int idx) {
+        if (isEscapeChar(fmt, idx)) return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx)) return PARAM_START;
         return FREE_TEXT;
     }
 
-    private static State evaluateParamStart(String fmt, int idx) {
-        if (isParamEnd(fmt, idx))
-            return PARAM_END;
+    private static State jumpFromParamStart(String fmt, int idx) {
+        if (isParamEnd(fmt, idx)) return PARAM_END;
         return PARAM;
     }
 
-    private static State evaluateParam(String fmt, int idx) {
-        if (isParamEnd(fmt, idx))
-            return PARAM_END;
+    private static State jumpFromParam(String fmt, int idx) {
+        if (isParamEnd(fmt, idx)) return PARAM_END;
         return PARAM;
     }
 
-    private static State evaluateParamEnd(String fmt, int idx) {
-        if (isParamStart(fmt, idx))
-            return PARAM_START;
+    private static State jumpFromParamEnd(String fmt, int idx) {
+        if (isEscapeChar(fmt, idx)) return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx)) return PARAM_START;
         return FREE_TEXT;
     }
 
     private static boolean isParamStart(String fmt, int idx) {
-        return ('#' == fmt.charAt(idx)) && (idx+1< fmt.length() &&  ('{' == fmt.charAt(idx+1)));
+        return ( '#' == fmt.charAt(idx) ) &&
+               ( idx + 1 < fmt.length() &&  ( '{' == fmt.charAt(idx+1)) );
     }
 
     private static boolean isParamEnd(String fmt, int idx) {
         return '}' == fmt.charAt(idx);
     }
 
+    private static boolean isEscapeChar(String fmt, int idx) {
+        return '`' == fmt.charAt(idx);
+    }
+
+    private static void validateParamChar(char cc, int idx) {
+        if ( !(isDigit(cc) || isLetter(cc) || '.'== cc) )
+            throw invalidCharacterInParam(cc, idx);
+    }
 }
