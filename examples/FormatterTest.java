@@ -2,17 +2,30 @@ import static net.andreinc.aleph.AlephFormatter.template;
 
 public class FormatterTest {
     public static void main(String[] args) {
+    }
 
-        String result = template("#{x} + #{y} = #{z}")
-                            .args("x", 5, "y", 10, "z", 15)
+    public static final void example1() {
+        String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
+                            .arg("errNo", 101)
+                            .arg("c", String.class)
                             .fmt();
+
         System.out.println(result);
+    }
 
-        Student student = new Student("Andrei", 30, "Male");
-        String studStr = template("#{id}\tName: #{st.getName}, Age: #{st.getAge}, Gender: #{st.getGender}")
-                            .arg("id", 10)
-                            .arg("st", student)
-                            .fmt();
-        System.out.println(studStr);
+    public static final void example2() {
+        String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
+                .args("errNo", 101, "c", String.class)
+                .fmt();
+
+        System.out.println(result);
+    }
+
+    public static final void example3() {
+        String result = template("#{errNo} + escaped: `#{errNo}")
+                        .arg("errNo", 101)
+                        .fmt();
+
+        System.out.println(result);
     }
 }
