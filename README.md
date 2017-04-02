@@ -54,3 +54,27 @@ Output:
 ```
 101 + escaped: #{errNo}
 ```
+
+## Installing
+
+The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph-formatter) repo.
+
+**jcenter()** needs to be added as a repository. 
+
+For gradle:
+
+```
+compile 'net.andreinc.aleph:aleph-formatter:0.0.1'
+```
+
+For maven:
+
+
+```
+<dependency>
+  <groupId>net.andreinc.aleph</groupId>
+  <artifactId>aleph-formatter</artifactId>
+  <version>0.0.1</version>
+  <type>pom</type>
+</dependency>
+```
