@@ -18,7 +18,7 @@ Error number: 101 -> String -> java.lang
 
 ## API
 
-The API is very simple, and has a [fluid](https://en.wikipedia.org/wiki/Fluent_interface) feel to it. 
+The API is very simple, and has a [fluent](https://en.wikipedia.org/wiki/Fluent_interface) feel to it. 
 
 There a few ways you can achieve the same thing as above. 
 
