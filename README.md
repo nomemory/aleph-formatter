@@ -30,6 +30,14 @@ String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
                 .fmt();
 ```
 
+It is also allowed to read the content of the String directly from the disk using the `fromFile()` method:
+
+```
+String result = fromFile("./file.tmp")
+                .args("errNo", 101, "c", String.class)
+                .fmt();
+```
+
 Escaping the `"#{"` can be done using the ``` ` ``` character:
 
 ```java
