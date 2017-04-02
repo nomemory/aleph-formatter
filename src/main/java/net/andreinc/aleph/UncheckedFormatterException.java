@@ -27,6 +27,9 @@ public class UncheckedFormatterException extends RuntimeException {
     private static final String INVALID_CHARACTER_IN_PARAM_NAME =
             "Invalid character '#{char}' used in param name (affected index: #{idx}).";
 
+    private static final String IO_EXCEPTION_READING_FROM_FILE =
+            "Error accessing #{strPath}. Exception:";
+
     public static UncheckedFormatterException invalidNumberOfArguments(int argsNum) {
         String msg = template(INVALID_NUMBER_OF_ARGUMENTS).arg("argsNum", argsNum).fmt();
         return new UncheckedFormatterException(msg);
@@ -40,5 +43,10 @@ public class UncheckedFormatterException extends RuntimeException {
     public static UncheckedFormatterException invalidCharacterInParam(char c, int idx) {
         String msg = template(INVALID_CHARACTER_IN_PARAM_NAME).args("char", c, "idx", idx).fmt();
         return new UncheckedFormatterException(msg);
+    }
+
+    public static UncheckedFormatterException ioExceptionReadingFromFile(String strPath, Throwable t) {
+        String msg = template(IO_EXCEPTION_READING_FROM_FILE).arg("strPath", strPath).fmt();
+        return new UncheckedFormatterException(msg, t);
     }
 }

@@ -16,7 +16,7 @@ Output:
 Error number: 101 -> String -> java.lang
 ```
 
-### API
+## API
 
 The API is very simple, and has a [fluid](https://en.wikipedia.org/wiki/Fluent_interface) feel to it. 
 

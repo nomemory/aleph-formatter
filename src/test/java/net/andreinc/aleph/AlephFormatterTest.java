@@ -2,9 +2,14 @@ package net.andreinc.aleph;
 
 import org.junit.Test;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
+import static net.andreinc.aleph.AlephFormatter.fromFile;
 import static net.andreinc.aleph.AlephFormatter.template;
 import static org.junit.Assert.assertTrue;
 
@@ -91,6 +96,23 @@ public class AlephFormatterTest {
     public void testWithFieldNames() throws Exception {
         Person person = new Person("A", "B", 20);
         String result = template("#{p.name}/#{p.text}/#{p.age}", "p", person).fmt();
-        System.out.println(result);
+        assertTrue("A/B/20".equals(result));
+    }
+
+    @Test
+    public void testFromFile() throws Exception {
+        File tmp = File.createTempFile("aleph" + UUID.randomUUID().toString(), ".tmp");
+        tmp.deleteOnExit();
+
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(tmp))) {
+            bw.write("#{p.name}/#{p.text}/#{p.age}");
+            bw.flush();
+
+        }
+
+        Person person = new Person("A", "B", 20);
+        String result = fromFile(tmp.getPath(), "p", person).fmt();
+
+        assertTrue("A/B/20".equals(result));
     }
 }

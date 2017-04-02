@@ -1,7 +1,10 @@
 package net.andreinc.aleph;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +12,7 @@ import static java.lang.Character.isDigit;
 import static java.lang.Character.isLetter;
 import static java.lang.reflect.Array.get;
 import static java.lang.reflect.Array.getLength;
+import static java.nio.file.Files.readAllBytes;
 import static net.andreinc.aleph.AlephFormatter.State.*;
 import static net.andreinc.aleph.UncheckedFormatterException.*;
 
@@ -47,7 +51,7 @@ public class AlephFormatter {
 
     private final String str;
 
-    private final Map<String, Object> args = new HashMap<>();
+    private final Map<String, Object> arguments = new HashMap<>();
 
     private AlephFormatter(String str) {
         this.str = str;
@@ -65,16 +69,42 @@ public class AlephFormatter {
         return template(str).args(args);
     }
 
+    public static AlephFormatter fromFile(String strPath) { return template(readFromFile(strPath)); }
+
+    public static AlephFormatter fromFile(String strPath, Charset encoding) { return template(readFromFile(strPath, encoding)); }
+
+    public static AlephFormatter fromFile(String strPath, Object... args) { return template(readFromFile(strPath), args); }
+
+    public static AlephFormatter fromFile(String strPath, Charset encoding, Object... args) { return template(readFromFile(strPath, encoding), args); }
+
+    public static AlephFormatter fromFile(String strPath, Map<String, Object> args) { return template(readFromFile(strPath), args); }
+
+    public static AlephFormatter fromFile(String strPath, Charset encoding, Map<String, Object> args) { return template(readFromFile(strPath, encoding), args); }
+
+    public static String readFromFile(String strPath, Charset encoding) {
+        try {
+            byte[] encodedBytes = readAllBytes(Paths.get(strPath));
+            return new String(encodedBytes, encoding);
+        } catch (IOException e) {
+            throw ioExceptionReadingFromFile(strPath, e);
+        }
+    }
+
+    public static String readFromFile(String strPath) {
+        //TODO validate strPath
+        return readFromFile(strPath, Charset.forName("UTF8"));
+    }
+
     public AlephFormatter arg(String argName, Object object) {
-        this.args.put(argName, object);
+        this.arguments.put(argName, object);
         return this;
     }
 
     public AlephFormatter args(Map<String, Object> args) {
         for(Map.Entry<String, Object> entry : args.entrySet()) {
-            if (this.args.containsKey(entry.getKey()))
+            if (this.arguments.containsKey(entry.getKey()))
                 throw argumentAlreadyExist(entry.getKey());
-            this.args.put(entry.getKey(), entry.getValue());
+            this.arguments.put(entry.getKey(), entry.getValue());
         }
         return this;
     }
@@ -88,11 +118,11 @@ public class AlephFormatter {
             String key = (String) args[i];
 
             // If the argument exists throw an error
-            if (this.args.containsKey(key))
+            if (this.arguments.containsKey(key))
                 throw argumentAlreadyExist(key);
 
             Object value = args[i+1];
-            this.args.put(key, value);
+            this.arguments.put(key, value);
         }
 
         return this;
@@ -150,7 +180,7 @@ public class AlephFormatter {
     // This methods gets called when we want to obtain the value of the parameter
     //
     // - The parameter can be a simple argument "#{intVal}" and in this case
-    // it is obtained directly from the args map.
+    // it is obtained directly from the arguments map.
     //
     // - The parameter can be a method chain argument: "#{address.getLine1.getNumber}"
     // in this case it is obtained by calling recursively the methods on the last obtained object
@@ -163,7 +193,7 @@ public class AlephFormatter {
         // Object name is the parameter that should be found in the map.
         // If it's followed by points, the points remain in the "param" buffer.
         String objectName = takeUntilDotOrEnd(param);
-        Object objectValue = args.get(objectName);
+        Object objectValue = arguments.get(objectName);
 
 
         result.append(

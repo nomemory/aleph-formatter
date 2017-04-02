@@ -1,3 +1,16 @@
+buildscript() {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.2'
+    }
+}
+
+plugins {
+    id "com.jfrog.bintray" version "1.7.3"
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 
@@ -15,3 +28,6 @@ dependencies {
 test {
     testLogging { events 'started', 'passed' }
 }
+
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'
