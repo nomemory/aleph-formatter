@@ -81,6 +81,11 @@ public class AlephFormatter {
 
     public static AlephFormatter fromFile(String strPath, Charset encoding, Map<String, Object> args) { return template(readFromFile(strPath, encoding), args); }
 
+    public void failIfArgExists(String argName) {
+        if (arguments.containsKey(argName))
+            throw argumentAlreadyExist(argName);
+    }
+
     public static String readFromFile(String strPath, Charset encoding) {
         try {
             byte[] encodedBytes = readAllBytes(Paths.get(strPath));
@@ -91,19 +96,18 @@ public class AlephFormatter {
     }
 
     public static String readFromFile(String strPath) {
-        //TODO validate strPath
         return readFromFile(strPath, Charset.forName("UTF8"));
     }
 
     public AlephFormatter arg(String argName, Object object) {
+        failIfArgExists(argName);
         this.arguments.put(argName, object);
         return this;
     }
 
     public AlephFormatter args(Map<String, Object> args) {
         for(Map.Entry<String, Object> entry : args.entrySet()) {
-            if (this.arguments.containsKey(entry.getKey()))
-                throw argumentAlreadyExist(entry.getKey());
+            failIfArgExists(entry.getKey());
             this.arguments.put(entry.getKey(), entry.getValue());
         }
         return this;
@@ -114,15 +118,11 @@ public class AlephFormatter {
         if (args.length % 2 == 1)
             throw invalidNumberOfArguments(args.length);
 
+        String key;
         for (int i = 0; i < args.length; i+=2) {
-            String key = (String) args[i];
-
-            // If the argument exists throw an error
-            if (this.arguments.containsKey(key))
-                throw argumentAlreadyExist(key);
-
-            Object value = args[i+1];
-            this.arguments.put(key, value);
+            key = (String) args[i];
+            failIfArgExists(key);
+            this.arguments.put(key, args[i+1]);
         }
 
         return this;
@@ -132,29 +132,26 @@ public class AlephFormatter {
      */
     public String fmt() {
 
-        StringBuilder result =  new StringBuilder(str.length());
-        StringBuilder param = new StringBuilder(16);
+        final StringBuilder result =  new StringBuilder(str.length());
+        final StringBuilder param = new StringBuilder(16);
 
         State state = FREE_TEXT;
 
         int i = 0;
+        char chr;
         while(i < str.length()) {
-            char chr = str.charAt(i);
+            chr = str.charAt(i);
             state = nextState(state, i);
             switch (state) {
                 // In this state we just add the character to the
                 // resulting buffer. No need to perform any processing.
-                case FREE_TEXT : result.append(chr); break;
-
+                case FREE_TEXT : { result.append(chr); break; }
                 // We identify '#'. We skip the following '{'.
-                case PARAM_START: i++; break;
-
+                case PARAM_START:  { i++; break; }
                 // We append the character to the param chain buffer
                 case PARAM: { validateParamChar(chr, i); param.append(chr); break; }
-
                 // We append and replace the param with the correct value
-                case PARAM_END: appendParamValue(param, result); break;
-
+                case PARAM_END: { appendParamValue(param, result); break; }
                 // Escape character
                 case ESCAPE_CHAR: break;
             }
@@ -168,12 +165,13 @@ public class AlephFormatter {
     // in the string and the current value of the character
     private State nextState(State currentState, int i) {
         switch (currentState) {
-            case FREE_TEXT      : return jumpFromFreText(str, i);
+            case FREE_TEXT      : return jumpFromFreeText(str, i);
             case PARAM_START    : return jumpFromParamStart(str, i);
             case PARAM          : return jumpFromParam(str, i);
             case PARAM_END      : return jumpFromParamEnd(str, i);
             case ESCAPE_CHAR    : return FREE_TEXT;
-            default             : throw new IllegalArgumentException("Invalid state exception when parsing string.");
+            // Should never go here
+            default             : throw invalidStateException(currentState);
         }
     }
 
@@ -186,20 +184,27 @@ public class AlephFormatter {
     // in this case it is obtained by calling recursively the methods on the last obtained object
     private void appendParamValue(StringBuilder param, StringBuilder result) {
 
-        if (param == null) {
-            throw new IllegalArgumentException("Invalid parameter name to append (NULL).");
-        }
+        if (param == null)
+            throw invalidArgumentName(param);
 
         // Object name is the parameter that should be found in the map.
         // If it's followed by points, the points remain in the "param" buffer.
-        String objectName = takeUntilDotOrEnd(param);
-        Object objectValue = arguments.get(objectName);
+        final String objectName = takeUntilDotOrEnd(param);
+        final Object objectValue = arguments.get(objectName);
 
 
-        result.append(
-                (param.length() != 0) ?
-                        valueInChain(objectValue, param) :
-                        evaluateIfArray(objectValue));
+        Object toAppend;
+        if (param.length() != 0) {
+            // If this is a chain object.method1.method2.method3
+            // we recurse
+            toAppend = valueInChain(objectValue, param);
+        } else {
+            // We evaluate if the obejct is an array
+            // If it's an array we print it nicely
+            toAppend = evaluateIfArray(objectValue);
+        }
+
+        result.append(toAppend);
     }
 
     private static Object evaluateIfArray(Object o) {
@@ -209,7 +214,7 @@ public class AlephFormatter {
     }
 
     private static String arrayToString(Object array) {
-        StringBuilder buff = new StringBuilder("[");
+        final StringBuilder buff = new StringBuilder("[");
 
         for(int i = 0; i < getLength(array); ++i)
             buff.append(get(array, i)).append(", ");
@@ -219,8 +224,11 @@ public class AlephFormatter {
 
     private static StringBuilder clearLastComma(StringBuilder buff) {
         int lastComma = buff.lastIndexOf(", ");
+
+        // No comma found, take everything
         if (-1 != lastComma)
             buff.delete(lastComma, buff.length());
+
         return buff;
     }
 
@@ -228,7 +236,7 @@ public class AlephFormatter {
     // until it finds the first dot ".".
     private static String takeUntilDotOrEnd(StringBuilder buff) {
 
-        int firstPointIdx = buff.indexOf(".");
+        final int firstPointIdx = buff.indexOf(".");
         String result;
 
         if (-1 == firstPointIdx) {
@@ -252,14 +260,16 @@ public class AlephFormatter {
             return evaluateIfArray(object);
         }
 
-        String methodName = takeUntilDotOrEnd(paramBuffer);
+        final String methodName = takeUntilDotOrEnd(paramBuffer);
 
         Object newObject;
         try {
             // Try with the given method or with the getter as a fallback
             Method method = getMethodOrGetter(object, methodName);
+
             if (null == method)
                 return null;
+
             newObject = method.invoke(object);
             return valueInChain(newObject, paramBuffer);
         } catch (IllegalAccessException | InvocationTargetException e) {
@@ -275,8 +285,8 @@ public class AlephFormatter {
         }  catch (NoSuchMethodException e) {
             try {
                 // Maybe improve this
-                String capital = methodName.substring(0, 1).toUpperCase();
-                String nameCapitalized = "get" + capital + methodName.substring(1);
+                final String capital = methodName.substring(0, 1).toUpperCase();
+                final String nameCapitalized = "get" + capital + methodName.substring(1);
                 method = object.getClass().getMethod(nameCapitalized);
             } catch (NoSuchMethodException e1) {
                 return null;
@@ -285,25 +295,31 @@ public class AlephFormatter {
         return method;
     }
 
-    private static State jumpFromFreText(String fmt, int idx) {
-        if (isEscapeChar(fmt, idx)) return ESCAPE_CHAR;
-        if (isParamStart(fmt, idx)) return PARAM_START;
+    private static State jumpFromFreeText(String fmt, int idx) {
+        if (isEscapeChar(fmt, idx))
+            return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx))
+            return PARAM_START;
         return FREE_TEXT;
     }
 
     private static State jumpFromParamStart(String fmt, int idx) {
-        if (isParamEnd(fmt, idx)) return PARAM_END;
+        if (isParamEnd(fmt, idx))
+            return PARAM_END;
         return PARAM;
     }
 
     private static State jumpFromParam(String fmt, int idx) {
-        if (isParamEnd(fmt, idx)) return PARAM_END;
+        if (isParamEnd(fmt, idx))
+            return PARAM_END;
         return PARAM;
     }
 
     private static State jumpFromParamEnd(String fmt, int idx) {
-        if (isEscapeChar(fmt, idx)) return ESCAPE_CHAR;
-        if (isParamStart(fmt, idx)) return PARAM_START;
+        if (isEscapeChar(fmt, idx))
+            return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx))
+            return PARAM_START;
         return FREE_TEXT;
     }
 
