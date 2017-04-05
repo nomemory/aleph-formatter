@@ -8,7 +8,7 @@ import static net.andreinc.aleph.AlephFormatter.template;
 public class UncheckedFormatterException extends RuntimeException {
 
     private static final String INVALID_NUMBER_OF_ARGUMENTS =
-            "Invalid number of arguments: {argsNum}. Every argument needs to have a pair.";
+            "Invalid number of arguments: #{argsNum}. Every argument needs to have a pair.";
 
     private static final String ARGUMENT_ALREADY_DEFINED =
             "Argument '#{arg}' is already defined in the arguments list.";
