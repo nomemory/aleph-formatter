@@ -74,7 +74,7 @@ For maven:
 <dependency>
   <groupId>net.andreinc.aleph</groupId>
   <artifactId>aleph-formatter</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.4</version>
   <type>pom</type>
 </dependency>
 ```
