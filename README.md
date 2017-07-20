@@ -75,6 +75,5 @@ For maven:
   <groupId>net.andreinc.aleph</groupId>
   <artifactId>aleph-formatter</artifactId>
   <version>0.0.5</version>
-  <type>pom</type>
 </dependency>
 ```
