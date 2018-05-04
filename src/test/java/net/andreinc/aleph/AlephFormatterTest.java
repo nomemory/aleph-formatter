@@ -115,4 +115,15 @@ public class AlephFormatterTest {
 
         assertTrue("A/B/20".equals(result));
     }
+
+    @Test
+    public void posArgsTest() throws Exception {
+
+        String result = template("#{6} #{0} #{oneParam.simpleName} #{1}")
+                            .arg("oneParam", String.class)
+                            .posArgs("A", "B")
+                            .fmt();
+
+        assertTrue(result.equals("A A String B"));
+    }
 }

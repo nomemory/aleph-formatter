@@ -22,8 +22,14 @@ public class UncheckedFormatterException extends RuntimeException {
     private static final String INVALID_ARGUMENT_NAME_NULL_OR_EMPTY =
             "Invalid argument name: '#{arg}'. Argument should not be null or empty";
 
-    private static final String INVALID_STATE_EXCEPTION = "" +
+    private static final String INVALID_STATE_EXCEPTION =
             "Invalid state: '#{state}'. No code coverage for this new state.";
+
+    public static final String INVALID_POSITIONAL_ARGUMENT =
+            "Currently there is no positional argument with: '#{index}'. Check you have enough parameters supplied through the 'posArgs(...)' method.";
+
+    public static final String INVALID_POSITIONAL_ARGUMENT_NEGATIVE =
+            "Negative positional argument detected: '#{index}'.";
 
     public UncheckedFormatterException() {
         super();
@@ -52,17 +58,26 @@ public class UncheckedFormatterException extends RuntimeException {
     }
 
     public static UncheckedFormatterException ioExceptionReadingFromFile(String strPath, Throwable t) {
-        String msg = template(IO_EXCEPTION_READING_FROM_FILE).arg("strPath", strPath).fmt();
+        String msg = template(IO_EXCEPTION_READING_FROM_FILE).arg("strPath", strPath)
+                        .fmt();
         return new UncheckedFormatterException(msg, t);
     }
 
     public static UncheckedFormatterException invalidArgumentName(Object argName) {
-        String msg = template(INVALID_ARGUMENT_NAME_NULL_OR_EMPTY, "arg", argName).fmt();
+        String msg = template(INVALID_ARGUMENT_NAME_NULL_OR_EMPTY, "arg", argName)
+                        .fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException invalidStateException(AlephFormatter.State state) {
-        String msg = template(INVALID_STATE_EXCEPTION, "state", state).fmt();
+        String msg = template(INVALID_STATE_EXCEPTION, "state", state)
+                        .fmt();
+        return new UncheckedFormatterException(msg);
+    }
+
+    public static UncheckedFormatterException invalidPositionalArgumentValue(Integer index) {
+        String msg = template(INVALID_POSITIONAL_ARGUMENT, "index", index)
+                        .fmt();
         return new UncheckedFormatterException(msg);
     }
 }

@@ -5,7 +5,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.Character.isDigit;
@@ -13,6 +15,7 @@ import static java.lang.Character.isLetter;
 import static java.lang.reflect.Array.get;
 import static java.lang.reflect.Array.getLength;
 import static java.nio.file.Files.readAllBytes;
+import static java.util.Arrays.asList;
 import static net.andreinc.aleph.AlephFormatter.State.*;
 import static net.andreinc.aleph.UncheckedFormatterException.*;
 
@@ -53,6 +56,8 @@ public class AlephFormatter {
 
     private final Map<String, Object> arguments = new HashMap<>();
 
+    private List<Object> posArguments = new ArrayList<>();
+
     private AlephFormatter(String str) {
         this.str = str;
     }
@@ -85,6 +90,7 @@ public class AlephFormatter {
         if (arguments.containsKey(argName))
             throw argumentAlreadyExist(argName);
     }
+
 
     public static String readFromFile(String strPath, Charset encoding) {
         try {
@@ -119,12 +125,18 @@ public class AlephFormatter {
             throw invalidNumberOfArguments(args.length);
 
         String key;
+
         for (int i = 0; i < args.length; i+=2) {
             key = (String) args[i];
             failIfArgExists(key);
             this.arguments.put(key, args[i+1]);
         }
 
+        return this;
+    }
+
+    public AlephFormatter posArgs(Object... args) {
+        this.posArguments = asList(args);
         return this;
     }
 
@@ -190,10 +202,24 @@ public class AlephFormatter {
         // Object name is the parameter that should be found in the map.
         // If it's followed by points, the points remain in the "param" buffer.
         final String objectName = takeUntilDotOrEnd(param);
-        final Object objectValue = arguments.get(objectName);
 
+        // Checks if object is positional parameter or named parameter
+        // Positional parameters are always numbers
+        Object objectValue;
+        try {
+            Integer objectIndex = Integer.parseInt(objectName);
+            try {
+                objectValue = posArguments.get(objectIndex);
+            } catch (IndexOutOfBoundsException e) {
+                throw invalidPositionalArgumentValue(objectIndex);
+            }
+        } catch(NumberFormatException nex) {
+            // The parameter is not a positional argument
+            objectValue = arguments.get(objectName);
+        }
 
         Object toAppend;
+
         if (param.length() != 0) {
             // If this is a chain object.method1.method2.method3
             // we recurse
