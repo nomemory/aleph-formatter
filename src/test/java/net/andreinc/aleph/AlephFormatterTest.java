@@ -119,7 +119,7 @@ public class AlephFormatterTest {
     @Test
     public void posArgsTest() throws Exception {
 
-        String result = template("#{6} #{0} #{oneParam.simpleName} #{1}")
+        String result = template("#{0} #{0} #{oneParam.simpleName} #{1}")
                             .arg("oneParam", String.class)
                             .posArgs("A", "B")
                             .fmt();
