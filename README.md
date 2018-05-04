@@ -64,7 +64,7 @@ The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph
 For gradle:
 
 ```
-compile 'net.andreinc.aleph:aleph-formatter:0.0.3'
+compile 'net.andreinc.aleph:aleph-formatter:0.0.5'
 ```
 
 For maven:
@@ -74,7 +74,6 @@ For maven:
 <dependency>
   <groupId>net.andreinc.aleph</groupId>
   <artifactId>aleph-formatter</artifactId>
-  <version>0.0.4</version>
-  <type>pom</type>
+  <version>0.0.5</version>
 </dependency>
 ```
