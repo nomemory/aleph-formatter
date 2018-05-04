@@ -55,6 +55,27 @@ Output:
 101 + escaped: #{errNo}
 ```
 
+The library also supports positional arguments supplied through the method: `posArgs(Object...)`. The positional arguments can be mixed with named - arguments aswel. 
+
+```java
+public class Example1 {
+    public static void main(String[] args) {
+
+        int someNumber = 100;
+        int anotherNumber = 13;
+
+        Person p = new Person("John Smith", 30);
+
+        String result = AlephFormatter.template("#{0} #{1} #{0} #{person.getName}")
+                                      .arg("person", p)
+                                      .posArgs(someNumber, anotherNumber)
+                                      .fmt();
+
+        System.out.println(result);
+    }
+}
+```
+
 ## Installing
 
 The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph-formatter) repo.
