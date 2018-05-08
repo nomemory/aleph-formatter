@@ -5,6 +5,10 @@ Aleph Formatter is a lightweight library for string formatting that supports bot
 ## Example - basic usage:
 
 ```java
+import static net.andreinc.aleph.AlephFormatter.str
+
+//...
+
 String s1 = str("#{1} #{0} #{1} #{0}", 1, 2).fmt();
 System.out.println(s1);
 ```    
