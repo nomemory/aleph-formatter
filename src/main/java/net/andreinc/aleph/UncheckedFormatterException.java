@@ -1,7 +1,5 @@
 package net.andreinc.aleph;
 
-import static net.andreinc.aleph.AlephFormatter.template;
-
 /**
  * Created by andreinicolinciobanu on 30/03/17.
  */
@@ -28,8 +26,8 @@ public class UncheckedFormatterException extends RuntimeException {
     public static final String INVALID_POSITIONAL_ARGUMENT =
             "Currently there is no positional argument with: '#{index}'. Check you have enough parameters supplied through the 'posArgs(...)' method.";
 
-    public static final String INVALID_POSITIONAL_ARGUMENT_NEGATIVE =
-            "Negative positional argument detected: '#{index}'.";
+    public static final String INVALID_POSITIONAL_ARGUMENTS =
+            "Calling 'posArgs()' with null (or no arguments) is not accepted.";
 
     public UncheckedFormatterException() {
         super();
@@ -42,41 +40,45 @@ public class UncheckedFormatterException extends RuntimeException {
     }
     public UncheckedFormatterException(Throwable cause) { super(cause);}
 
+    public static UncheckedFormatterException invalidPositionalArguments() {
+        return new UncheckedFormatterException(INVALID_POSITIONAL_ARGUMENTS);
+    }
+
     public static UncheckedFormatterException invalidNumberOfArguments(int argsNum) {
-        String msg = template(INVALID_NUMBER_OF_ARGUMENTS).arg("argsNum", argsNum).fmt();
+        String msg = AlephFormatter.str(INVALID_NUMBER_OF_ARGUMENTS).arg("argsNum", argsNum).fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException argumentAlreadyExist(String arg) {
-        String msg = template(ARGUMENT_ALREADY_DEFINED).arg("arg", arg).fmt();
+        String msg = AlephFormatter.str(ARGUMENT_ALREADY_DEFINED).arg("arg", arg).fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException invalidCharacterInParam(char c, int idx) {
-        String msg = template(INVALID_CHARACTER_IN_PARAM_NAME).args("char", c, "idx", idx).fmt();
+        String msg = AlephFormatter.str(INVALID_CHARACTER_IN_PARAM_NAME).args("char", c, "idx", idx).fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException ioExceptionReadingFromFile(String strPath, Throwable t) {
-        String msg = template(IO_EXCEPTION_READING_FROM_FILE).arg("strPath", strPath)
+        String msg = AlephFormatter.str(IO_EXCEPTION_READING_FROM_FILE).arg("strPath", strPath)
                         .fmt();
         return new UncheckedFormatterException(msg, t);
     }
 
     public static UncheckedFormatterException invalidArgumentName(Object argName) {
-        String msg = template(INVALID_ARGUMENT_NAME_NULL_OR_EMPTY, "arg", argName)
+        String msg = AlephFormatter.str(INVALID_ARGUMENT_NAME_NULL_OR_EMPTY, "arg", argName)
                         .fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException invalidStateException(AlephFormatter.State state) {
-        String msg = template(INVALID_STATE_EXCEPTION, "state", state)
+        String msg = AlephFormatter.str(INVALID_STATE_EXCEPTION, "state", state)
                         .fmt();
         return new UncheckedFormatterException(msg);
     }
 
     public static UncheckedFormatterException invalidPositionalArgumentValue(Integer index) {
-        String msg = template(INVALID_POSITIONAL_ARGUMENT, "index", index)
+        String msg = AlephFormatter.str(INVALID_POSITIONAL_ARGUMENT, "index", index)
                         .fmt();
         return new UncheckedFormatterException(msg);
     }

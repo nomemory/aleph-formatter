@@ -62,35 +62,38 @@ public class AlephFormatter {
         this.str = str;
     }
 
-    public static AlephFormatter template(String str) {
+    public static AlephFormatter str(String str) {
         return new AlephFormatter(str);
     }
 
-    public static AlephFormatter template(String str, Object... args) {
-        return template(str).args(args);
+    public static AlephFormatter str(String str, Object... args) {
+        AlephFormatter af = new AlephFormatter(str);
+        if (args!=null) {
+            af.posArguments = asList(args);
+        }
+        return af;
     }
 
-    public static AlephFormatter template(String str, Map<String, Object> args) {
-        return template(str).args(args);
+    public static AlephFormatter str(String str, Map<String, Object> args) {
+        return str(str).args(args);
     }
 
-    public static AlephFormatter fromFile(String strPath) { return template(readFromFile(strPath)); }
+    public static AlephFormatter file(String strPath) { return str(readFromFile(strPath)); }
 
-    public static AlephFormatter fromFile(String strPath, Charset encoding) { return template(readFromFile(strPath, encoding)); }
+    public static AlephFormatter file(String strPath, Charset encoding) { return str(readFromFile(strPath, encoding)); }
 
-    public static AlephFormatter fromFile(String strPath, Object... args) { return template(readFromFile(strPath), args); }
+    public static AlephFormatter file(String strPath, Object... args) { return str(readFromFile(strPath), args); }
 
-    public static AlephFormatter fromFile(String strPath, Charset encoding, Object... args) { return template(readFromFile(strPath, encoding), args); }
+    public static AlephFormatter file(String strPath, Charset encoding, Object... args) { return str(readFromFile(strPath, encoding), args); }
 
-    public static AlephFormatter fromFile(String strPath, Map<String, Object> args) { return template(readFromFile(strPath), args); }
+    public static AlephFormatter file(String strPath, Map<String, Object> args) { return str(readFromFile(strPath), args); }
 
-    public static AlephFormatter fromFile(String strPath, Charset encoding, Map<String, Object> args) { return template(readFromFile(strPath, encoding), args); }
+    public static AlephFormatter file(String strPath, Charset encoding, Map<String, Object> args) { return str(readFromFile(strPath, encoding), args); }
 
     public void failIfArgExists(String argName) {
         if (arguments.containsKey(argName))
             throw argumentAlreadyExist(argName);
     }
-
 
     public static String readFromFile(String strPath, Charset encoding) {
         try {
@@ -135,11 +138,6 @@ public class AlephFormatter {
         return this;
     }
 
-    public AlephFormatter posArgs(Object... args) {
-        this.posArguments = asList(args);
-        return this;
-    }
-
     /**
      */
     public String fmt() {
@@ -174,7 +172,7 @@ public class AlephFormatter {
     }
 
     // The method that is used to change the states depending on the index
-    // in the string and the current value of the character
+    // in the str and the current value of the character
     private State nextState(State currentState, int i) {
         switch (currentState) {
             case FREE_TEXT      : return jumpFromFreeText(str, i);
@@ -185,6 +183,53 @@ public class AlephFormatter {
             // Should never go here
             default             : throw invalidStateException(currentState);
         }
+    }
+
+
+    private static State jumpFromFreeText(String fmt, int idx) {
+        if (isEscapeChar(fmt, idx))
+            return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx))
+            return PARAM_START;
+        return FREE_TEXT;
+    }
+
+    private static State jumpFromParamStart(String fmt, int idx) {
+        if (isParamEnd(fmt, idx))
+            return PARAM_END;
+        return PARAM;
+    }
+
+    private static State jumpFromParam(String fmt, int idx) {
+        if (isParamEnd(fmt, idx))
+            return PARAM_END;
+        return PARAM;
+    }
+
+    private static State jumpFromParamEnd(String fmt, int idx) {
+        if (isEscapeChar(fmt, idx))
+            return ESCAPE_CHAR;
+        if (isParamStart(fmt, idx))
+            return PARAM_START;
+        return FREE_TEXT;
+    }
+
+    private static boolean isParamStart(String fmt, int idx) {
+        return ( '#' == fmt.charAt(idx) ) &&
+                ( idx + 1 < fmt.length() &&  ( '{' == fmt.charAt(idx+1)) );
+    }
+
+    private static boolean isParamEnd(String fmt, int idx) {
+        return '}' == fmt.charAt(idx);
+    }
+
+    private static boolean isEscapeChar(String fmt, int idx) {
+        return '`' == fmt.charAt(idx);
+    }
+
+    private static void validateParamChar(char cc, int idx) {
+        if ( !(isDigit(cc) || isLetter(cc) || '.'== cc) )
+            throw invalidCharacterInParam(cc, idx);
     }
 
     // This methods gets called when we want to obtain the value of the parameter
@@ -306,6 +351,7 @@ public class AlephFormatter {
 
     public static Method getMethodOrGetter(Object object, String methodName) {
         Method method;
+
         try {
             method = object.getClass().getMethod(methodName);
         }  catch (NoSuchMethodException e) {
@@ -318,52 +364,7 @@ public class AlephFormatter {
                 return null;
             }
         }
+
         return method;
-    }
-
-    private static State jumpFromFreeText(String fmt, int idx) {
-        if (isEscapeChar(fmt, idx))
-            return ESCAPE_CHAR;
-        if (isParamStart(fmt, idx))
-            return PARAM_START;
-        return FREE_TEXT;
-    }
-
-    private static State jumpFromParamStart(String fmt, int idx) {
-        if (isParamEnd(fmt, idx))
-            return PARAM_END;
-        return PARAM;
-    }
-
-    private static State jumpFromParam(String fmt, int idx) {
-        if (isParamEnd(fmt, idx))
-            return PARAM_END;
-        return PARAM;
-    }
-
-    private static State jumpFromParamEnd(String fmt, int idx) {
-        if (isEscapeChar(fmt, idx))
-            return ESCAPE_CHAR;
-        if (isParamStart(fmt, idx))
-            return PARAM_START;
-        return FREE_TEXT;
-    }
-
-    private static boolean isParamStart(String fmt, int idx) {
-        return ( '#' == fmt.charAt(idx) ) &&
-               ( idx + 1 < fmt.length() &&  ( '{' == fmt.charAt(idx+1)) );
-    }
-
-    private static boolean isParamEnd(String fmt, int idx) {
-        return '}' == fmt.charAt(idx);
-    }
-
-    private static boolean isEscapeChar(String fmt, int idx) {
-        return '`' == fmt.charAt(idx);
-    }
-
-    private static void validateParamChar(char cc, int idx) {
-        if ( !(isDigit(cc) || isLetter(cc) || '.'== cc) )
-            throw invalidCharacterInParam(cc, idx);
     }
 }
