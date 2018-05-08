@@ -2,7 +2,7 @@
 
 Aleph Formatter is a lightweight library for string formatting that supports both named and positional parameters with a twist: it has a limited support for object introspection.
 
-## Example - basic usage:
+#### Example - basic usage:
 
 ```java
 import static net.andreinc.aleph.AlephFormatter.str
@@ -19,7 +19,7 @@ Output:
 2 1 2 1
 ```
 
-## Example - simple introspection
+#### Example - simple introspection
 
 Each parameter supports limited method invocation:
 
@@ -34,9 +34,9 @@ Output
 Class:String
 ```
 
-Explanation on the `String.class` you can invoke the method: `getSimpleName` directly in the template. `String.class` is the `#{0}` param. 
+On the `String.class` you can invoke the method: `getSimpleName` directly in the template. `String.class` is the `#{0}` param. 
 
-## Example - Named arguments
+#### Example - Named arguments
 
 ```java
 String s3 = str("#{date.dayOfMonth}-#{date.month}-#{date.year}")
@@ -55,6 +55,19 @@ Output:
 ```
 8-MAY-2018
 String, A, 1, 100, [1, 2, 3]
+```
+
+#### Example - Escaping
+
+```java
+String s5 = str("`#{escaped} #{notEscaped}").args("escaped", 1, "notEscaped", 2).fmt();
+System.out.println(s5);
+```
+
+Output:
+
+```
+escaped: #{escaped} 2
 ```
 
 # installing
