@@ -9,7 +9,8 @@ import static net.andreinc.aleph.AlephFormatter.str
 
 //...
 
-String s1 = str("#{1} #{0} #{1} #{0}", 1, 2).fmt();
+String s1 = str("#{1} #{0} #{1} #{0}", 1, 2)
+            .fmt();
 System.out.println(s1);
 ```    
 
@@ -24,7 +25,8 @@ Output:
 Each parameter supports limited method invocation:
 
 ```java
-String s2 = str("#{1}#{0.simpleName}", String.class, "Class:").fmt();
+String s2 = str("#{1}#{0.simpleName}", String.class, "Class:")
+            .fmt();
 System.out.println(s2);
 ```        
 
@@ -40,13 +42,13 @@ On the `String.class` you can invoke the method: `getSimpleName` directly in the
 
 ```java
 String s3 = str("#{date.dayOfMonth}-#{date.month}-#{date.year}")
-                    .arg("date", LocalDate.now())
-                    .fmt();
+            .arg("date", LocalDate.now())
+            .fmt();
 System.out.println(s3);
 
 String s4 = str("#{2.simpleName}, #{1}, #{0}, #{aNumber}, #{anArray}", 1, "A", String.class)
-                        .args("aNumber", 100, "anArray", new int[]{1,2,3,})
-                        .fmt();
+            .args("aNumber", 100, "anArray", new int[]{1,2,3,})
+            .fmt();
 System.out.println(s4);                        
 ```                        
 
@@ -60,7 +62,8 @@ String, A, 1, 100, [1, 2, 3]
 #### Example - Escaping `#{`
 
 ```java
-String s5 = str("`#{escaped} #{notEscaped}").args("escaped", 1, "notEscaped", 2).fmt();
+String s5 = str("`#{escaped} #{notEscaped}").args("escaped", 1, "notEscaped", 2)
+            .fmt();
 System.out.println(s5);
 ```
 
