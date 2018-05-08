@@ -1,82 +1,59 @@
 # aleph-formatter
 
-`AlephFormatter` is a lightweight String Formatter for Java that supports named parameters with a twist: it has a very limited support for object introspection. 
+Aleph Formatter is a lightweight library for string formatting that supports both named and positional parameters with a twist: it has a limited support for object introspection.
+
+## Example - basic usage:
 
 ```java
-String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
-                .arg("errNo", 101)
-                .arg("c", String.class)
-                .fmt();
+String s1 = str("#{1} #{0} #{1} #{0}", 1, 2).fmt();
+System.out.println(s1);
+```    
 
-
-System.out.println(result);
-```
 Output:
+
 ```
-Error number: 101 -> String -> java.lang
+2 1 2 1
 ```
 
-## API
+## Example - simple introspection
 
-The API is very simple, and has a [fluent](https://en.wikipedia.org/wiki/Fluent_interface) feel to it. 
-
-There a few ways you can achieve the same thing as above. 
-
-For example instead of using `arg()` you can use `args()` and specify the list of parameters on a single line, alternating the argument to be replaced with it's value:
+Each parameter supports limited method invocation:
 
 ```java
-String result = template("#{errNo} -> #{c.simpleName} -> #{c.package.name}")
-                .args("errNo", 101, "c", String.class)
-                .fmt();
+String s2 = str("#{1}#{0.simpleName}", String.class, "Class:").fmt();
+System.out.println(s2);
+```        
+
+Output
+
+```
+Class:String
 ```
 
-It is also allowed to read the content of the String directly from the disk using the `fromFile()` method:
+Explanation on the `String.class` you can invoke the method: `getSimpleName` directly in the template. `String.class` is the `#{0}` param. 
 
-```
-String result = fromFile("./file.tmp")
-                .args("errNo", 101, "c", String.class)
-                .fmt();
-```
-
-Escaping the `"#{"` can be done using the ``` ` ``` character:
+## Example - Named arguments
 
 ```java
-String result = template("#{errNo} + escaped: `#{errNo}")
-                 .arg("errNo", 101)
-                 .fmt();
+String s3 = str("#{date.dayOfMonth}-#{date.month}-#{date.year}")
+                    .arg("date", LocalDate.now())
+                    .fmt();
+System.out.println(s3);
 
-System.out.println(result);
+String s4 = str("#{2.simpleName}, #{1}, #{0}, #{aNumber}, #{anArray}", 1, "A", String.class)
+                        .args("aNumber", 100, "anArray", new int[]{1,2,3,})
+                        .fmt();
+System.out.println(s4);                        
+```                        
+
+Output:
+
+```
+8-MAY-2018
+String, A, 1, 100, [1, 2, 3]
 ```
 
-If one of the arguments is missing, or the mehod chain on the object cannot be executed, it replaces the value with `"null"` instead of throwing a `NullPointerException`.
-
-Output: 
-```
-101 + escaped: #{errNo}
-```
-
-The library also supports positional arguments supplied through the method: `posArgs(Object...)`. The positional arguments can be mixed with named - arguments aswel. 
-
-```java
-public class Example1 {
-    public static void main(String[] args) {
-
-        int someNumber = 100;
-        int anotherNumber = 13;
-
-        Person p = new Person("John Smith", 30);
-
-        String result = AlephFormatter.template("#{0} #{1} #{0} #{person.getName}")
-                                      .arg("person", p)
-                                      .posArgs(someNumber, anotherNumber)
-                                      .fmt();
-
-        System.out.println(result);
-    }
-}
-```
-
-## Installing
+# installing
 
 The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph-formatter) repo.
 
@@ -85,7 +62,7 @@ The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph
 For gradle:
 
 ```
-compile 'net.andreinc.aleph:aleph-formatter:0.0.6'
+compile 'net.andreinc.aleph:aleph-formatter:0.0.7'
 ```
 
 For maven:
@@ -95,6 +72,6 @@ For maven:
 <dependency>
   <groupId>net.andreinc.aleph</groupId>
   <artifactId>aleph-formatter</artifactId>
-  <version>0.0.6</version>
+  <version>0.0.7</version>
 </dependency>
 ```
