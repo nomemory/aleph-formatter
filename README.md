@@ -57,7 +57,7 @@ Output:
 String, A, 1, 100, [1, 2, 3]
 ```
 
-#### Example - Escaping
+#### Example - Escaping `#{`
 
 ```java
 String s5 = str("`#{escaped} #{notEscaped}").args("escaped", 1, "notEscaped", 2).fmt();
@@ -67,7 +67,7 @@ System.out.println(s5);
 Output:
 
 ```
-escaped: #{escaped} 2
+#{escaped} 2
 ```
 
 # installing
