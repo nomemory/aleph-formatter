@@ -51,7 +51,18 @@ public class AlephFormatter {
         // Escape char
         ESCAPE_CHAR
     }
-
+    private static char START_CHARACTER = '#';
+    private static char OPEN_BRACKET = '{';
+    private static char CLOSE_BRACKET = '}';
+    private static char ESCAPE_CHARACTER = '`';
+    
+    public static void setSpecialCharacters(char start, char open, char close, char escape) {
+        START_CHARACTER = start;
+        OPEN_BRACKET = open;
+        CLOSE_BRACKET = close;
+        ESCAPE_CHARACTER = escape;
+    }
+    
     private final String str;
 
     private final Map<String, Object> arguments = new HashMap<>();
@@ -215,16 +226,16 @@ public class AlephFormatter {
     }
 
     private static boolean isParamStart(String fmt, int idx) {
-        return ( '#' == fmt.charAt(idx) ) &&
-                ( idx + 1 < fmt.length() &&  ( '{' == fmt.charAt(idx+1)) );
+        return ( START_CHARACTER == fmt.charAt(idx) ) &&
+                ( idx + 1 < fmt.length() &&  ( OPEN_BRACKET == fmt.charAt(idx+1)) );
     }
 
     private static boolean isParamEnd(String fmt, int idx) {
-        return '}' == fmt.charAt(idx);
+        return CLOSE_BRACKET == fmt.charAt(idx);
     }
 
     private static boolean isEscapeChar(String fmt, int idx) {
-        return '`' == fmt.charAt(idx);
+        return ESCAPE_CHARACTER == fmt.charAt(idx);
     }
 
     private static void validateParamChar(char cc, int idx) {
@@ -367,4 +378,5 @@ public class AlephFormatter {
 
         return method;
     }
+    
 }
