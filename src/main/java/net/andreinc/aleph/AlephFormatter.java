@@ -107,6 +107,57 @@ public class AlephFormatter {
     public static String readFromFile(String strPath) {
         return readFromFile(strPath, Charset.forName("UTF8"));
     }
+    
+    private Style style = Styles.DEFAULT;
+    
+    public static interface Style {
+        public char getStartCharacter();
+        public char getOpenBracket();
+        public char getCloseBracket();
+        public char getEscapeCharacter();
+    }
+    
+    public static enum Styles implements Style {
+        /** The default style (<code>#{var} `#{escaped}</code>) */
+        DEFAULT ('#','{','}','`'),
+        
+        /** Dollars style (<code>${var} `${escaped}</code>) */
+        DOLLARS ('$','{','}','`');
+        
+        private final char START_CHARACTER;
+        private final char OPEN_BRACKET;
+        private final char CLOSE_BRACKET;
+        private final char ESCAPE_CHARACTER;
+        
+        private Styles(char START_CHARACTER, char OPEN_BRACKET, char CLOSE_BRACKET, char ESCAPE_CHARACTER) {
+            this.START_CHARACTER = START_CHARACTER;
+            this.OPEN_BRACKET = OPEN_BRACKET;
+            this.CLOSE_BRACKET = CLOSE_BRACKET;
+            this.ESCAPE_CHARACTER = ESCAPE_CHARACTER;
+        }
+
+        public char getStartCharacter() {
+            return START_CHARACTER;
+        }
+
+        public char getOpenBracket() {
+            return OPEN_BRACKET;
+        }
+
+        public char getCloseBracket() {
+            return CLOSE_BRACKET;
+        }
+
+        public char getEscapeCharacter() {
+            return ESCAPE_CHARACTER;
+        }
+        
+    }
+    
+    public AlephFormatter style(Style style) {
+        this.style = style;
+        return this;
+    }
 
     public AlephFormatter arg(String argName, Object object) {
         failIfArgExists(argName);
@@ -186,7 +237,7 @@ public class AlephFormatter {
     }
 
 
-    private static State jumpFromFreeText(String fmt, int idx) {
+    private State jumpFromFreeText(String fmt, int idx) {
         if (isEscapeChar(fmt, idx))
             return ESCAPE_CHAR;
         if (isParamStart(fmt, idx))
@@ -194,19 +245,19 @@ public class AlephFormatter {
         return FREE_TEXT;
     }
 
-    private static State jumpFromParamStart(String fmt, int idx) {
+    private State jumpFromParamStart(String fmt, int idx) {
         if (isParamEnd(fmt, idx))
             return PARAM_END;
         return PARAM;
     }
 
-    private static State jumpFromParam(String fmt, int idx) {
+    private State jumpFromParam(String fmt, int idx) {
         if (isParamEnd(fmt, idx))
             return PARAM_END;
         return PARAM;
     }
 
-    private static State jumpFromParamEnd(String fmt, int idx) {
+    private State jumpFromParamEnd(String fmt, int idx) {
         if (isEscapeChar(fmt, idx))
             return ESCAPE_CHAR;
         if (isParamStart(fmt, idx))
@@ -214,20 +265,20 @@ public class AlephFormatter {
         return FREE_TEXT;
     }
 
-    private static boolean isParamStart(String fmt, int idx) {
-        return ( '#' == fmt.charAt(idx) ) &&
-                ( idx + 1 < fmt.length() &&  ( '{' == fmt.charAt(idx+1)) );
+    private boolean isParamStart(String fmt, int idx) {
+        return ( style.getStartCharacter() == fmt.charAt(idx) ) &&
+                ( idx + 1 < fmt.length() &&  ( style.getOpenBracket() == fmt.charAt(idx+1)) );
     }
 
-    private static boolean isParamEnd(String fmt, int idx) {
-        return '}' == fmt.charAt(idx);
+    private boolean isParamEnd(String fmt, int idx) {
+        return style.getCloseBracket() == fmt.charAt(idx);
     }
 
-    private static boolean isEscapeChar(String fmt, int idx) {
-        return '`' == fmt.charAt(idx);
+    private boolean isEscapeChar(String fmt, int idx) {
+        return style.getEscapeCharacter() == fmt.charAt(idx);
     }
 
-    private static void validateParamChar(char cc, int idx) {
+    private void validateParamChar(char cc, int idx) {
         if ( !(isDigit(cc) || isLetter(cc) || '.'== cc) )
             throw invalidCharacterInParam(cc, idx);
     }

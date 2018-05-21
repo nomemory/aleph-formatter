@@ -2,6 +2,9 @@ package net.andreinc.aleph;
 
 import org.junit.Test;
 
+import net.andreinc.aleph.AlephFormatter.Style;
+import net.andreinc.aleph.AlephFormatter.Styles;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -33,8 +36,7 @@ public class AlephFormatterTest {
 
     @Test(expected = UncheckedFormatterException.class)
     public void testWithInvalidParam() throws Exception {
-        String result = AlephFormatter.str("#{#{}} #{a}").args().fmt();
-        System.out.println(result);
+        AlephFormatter.str("#{#{}} #{a}").args().fmt();
     }
 
     @Test
@@ -62,7 +64,6 @@ public class AlephFormatterTest {
     public void testEscape() throws Exception {
         String result = AlephFormatter.str("`#{q},#{q}").args("q", "Q").fmt();
         assertTrue("#{q},Q".equals(result));
-        System.out.println(result);
     }
 
     @Test
@@ -73,8 +74,7 @@ public class AlephFormatterTest {
 
     @Test(expected = UncheckedFormatterException.class)
     public void testEscapeInParamName() throws Exception {
-        String result = AlephFormatter.str("#{`q}#{q`}").args("q", "Q").fmt();
-        System.out.println(result);
+        AlephFormatter.str("#{`q}#{q`}").args("q", "Q").fmt();
     }
 
     @Test
@@ -111,18 +111,65 @@ public class AlephFormatterTest {
         Person person = new Person("A", "B", 20);
         String result = AlephFormatter.file(tmp.getPath()).args("p", person).fmt();
 
-        System.out.println(result);
         assertTrue("A/B/20".equals(result));
     }
 
     @Test
     public void posArgsTest() throws Exception {
-
         String result = AlephFormatter
                             .str("#{0} #{0} #{oneParam.simpleName} #{1}", "A", "B")
                             .arg("oneParam", String.class)
                             .fmt();
-
         assertTrue(result.equals("A A String B"));
+    }
+    
+    @Test
+    public void testWithDefaultStyle() throws Exception {
+        String result = AlephFormatter
+                            .str("#{a} #{b} `#{c}")
+                            .style(Styles.DEFAULT)
+                            .args("a","A","b","B","c","C")
+                            .fmt();
+        assertTrue(result.equals("A B #{c}")); 
+    }
+    
+    @Test
+    public void testWithDollarsStyle() throws Exception {
+        String result = AlephFormatter
+                            .str("${a} ${b} `${c}")
+                            .style(Styles.DOLLARS)
+                            .args("a","A","b","B","c","C")
+                            .fmt();
+        assertTrue(result.equals("A B ${c}")); 
+    }
+    
+    @Test
+    public void testWithCustomStyle() throws Exception {
+        String result = AlephFormatter
+                .str("@^a$ @^b$ !@^c$")
+                .style(new Style() {
+                    @Override public char getStartCharacter() { return '@'; }
+                    @Override public char getOpenBracket() { return '^'; }
+                    @Override public char getCloseBracket() { return '$'; }
+                    @Override public char getEscapeCharacter() { return '!'; }
+                })
+                .args("a","A","b","B","c","C")
+                .fmt();
+        assertTrue(result.equals("A B @^c$")); 
+    }
+    
+    @Test
+    public void testWithRepeatedCharInStyle() throws Exception {
+        String result = AlephFormatter
+                .str("@$a$ @$b$ `@$c$")
+                .style(new Style() {
+                    @Override public char getStartCharacter() { return '@'; }
+                    @Override public char getOpenBracket() { return '$'; }
+                    @Override public char getCloseBracket() { return '$'; }
+                    @Override public char getEscapeCharacter() { return '`'; }
+                })
+                .args("a","A","b","B","c","C")
+                .fmt();
+        assertTrue(result.equals("A B @$c$")); 
     }
 }
