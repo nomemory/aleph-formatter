@@ -73,6 +73,20 @@ Output:
 #{escaped} 2
 ```
 
+#### Example - Changing Interpolation Styles
+
+```java
+//Note the use of ${var} not #{var}
+String s6 = str("${dollars}").args("dollars", "notPound")
+            .style(Styles.DOLLARS).fmt();
+```
+
+Output:
+
+```
+notPound
+```
+
 # installing
 
 The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph-formatter) repo.
