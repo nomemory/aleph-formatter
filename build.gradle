@@ -27,10 +27,8 @@ tasks.withType(JavaCompile) {
     targetCompatibility = '1.7'
 }
 
-dependencies {
-    compile group: 'net.andreinc.jvbe', name: 'jvbe', version: '0.0.3'
+dependencies {  
     testCompile group: 'junit', name: 'junit', version: '4.4'
-    compile 'net.andreinc.jasuggest:jasuggest:0.0.1'
 }
 
 test {
