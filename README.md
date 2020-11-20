@@ -4,7 +4,7 @@ Aleph Formatter is a lightweight library for string formatting that supports bot
 
 Aleph Formatter performs better than `String.format`, especially for smaller `String` variables.
 
-A **jmh** benchmark is showing the following results:
+A **jmh** benchmark is showing the following results (smaller is better):
 
 ```
 CPU: AMD Ryzen 7 5800x, PBO
