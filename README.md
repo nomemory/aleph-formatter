@@ -2,9 +2,7 @@
 
 Aleph Formatter is a lightweight library for string formatting that supports both named and positional parameters with a twist: it has a limited support for object introspection.
 
-Aleph Formatter performs better than `String.format`, especially for smaller `String` variables.
-
-A **jmh** benchmark is showing the following results (smaller is better):
+Aleph Formatter performs better than `String.format` for simple cases. A **jmh** benchmark is showing the following results (smaller is better):
 
 ```
 CPU: AMD Ryzen 7 5800x, PBO
