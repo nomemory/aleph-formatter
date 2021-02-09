@@ -17,7 +17,7 @@ Maven:
 ```
 
 Gradle:
-```
+```groovy
 implementation 'net.andreinc:aleph:0.1.1'
 ```
 
