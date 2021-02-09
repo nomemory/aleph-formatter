@@ -5,7 +5,7 @@ Aleph Formatter is a lightweight library for string formatting that supports bot
 
 # installing
 
-Historically the library was found in `jcenter()`. But given `jcenter()`'s [service end](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/) it was moved to maven central:
+Historically, the library was found in `jcenter()`. But given `jcenter()`'s [service end](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/) it was moved to maven central:
 
 Maven:
 ```xml
