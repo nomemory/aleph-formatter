@@ -2,6 +2,27 @@
 
 Aleph Formatter is a lightweight library for string formatting that supports both named and positional parameters with a twist: it has a limited support for object introspection.
 
+
+# installing
+
+Historically the library was found in `jcenter()`. But given `jcenter()`'s [service end](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/) it was moved to maven central:
+
+Maven:
+```xml
+<dependency>
+  <groupId>net.andreinc</groupId>
+  <artifactId>aleph</artifactId>
+  <version>0.1.1</version>
+</dependency>
+```
+
+Gradle:
+```
+implementation 'net.andreinc:aleph:0.1.1'
+```
+
+# benchmarks
+
 Aleph Formatter performs better than `String.format` for simple cases. A **jmh** benchmark is showing the following results (smaller is better):
 
 ```
@@ -103,27 +124,4 @@ Output:
 
 ```
 notPound
-```
-
-# installing
-
-The library is found in the [jcenter()](https://bintray.com/nomemory/maven/aleph-formatter) repo.
-
-**jcenter()** needs to be added as a repository. 
-
-For gradle:
-
-```
-compile 'net.andreinc.aleph:aleph-formatter:0.1.1'
-```
-
-For maven:
-
-
-```
-<dependency>
-  <groupId>net.andreinc.aleph</groupId>
-  <artifactId>aleph-formatter</artifactId>
-  <version>0.1.1</version>
-</dependency>
 ```
